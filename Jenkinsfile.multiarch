@@ -1,0 +1,58 @@
+// Builds a small C program for both x86_64 and arm64 by routing the same
+// build stage to two different labeled agents, then stashes/unstashes the
+// binaries back to a single node for the "package" step. This is the
+// pipeline that made the multi-arch part of the task actually click for me
+// - it's not cross-compiling, it's genuinely running the compiler on
+// hardware of that architecture.
+
+pipeline {
+    agent none
+
+    environment {
+        APP_NAME = 'hello-remoting'
+    }
+
+    stages {
+        stage('Build (parallel across archs)') {
+            parallel {
+                stage('x86_64 build') {
+                    agent { label 'linux' }
+                    steps {
+                        sh '''
+                            echo "int main(){return 0;}" > hello.c
+                            gcc -o ${APP_NAME}-x86_64 hello.c
+                            file ${APP_NAME}-x86_64
+                        '''
+                        stash name: 'x86_64-binary', includes: "${APP_NAME}-x86_64"
+                    }
+                }
+
+                stage('arm64 build') {
+                    agent { label 'arm' }
+                    steps {
+                        sh '''
+                            echo "int main(){return 0;}" > hello.c
+                            gcc -o ${APP_NAME}-arm64 hello.c
+                            file ${APP_NAME}-arm64
+                        '''
+                        stash name: 'arm64-binary', includes: "${APP_NAME}-arm64"
+                    }
+                }
+            }
+        }
+
+        stage('Package') {
+            agent { label 'linux' }
+            steps {
+                unstash 'x86_64-binary'
+                unstash 'arm64-binary'
+                sh '''
+                    mkdir -p dist
+                    mv ${APP_NAME}-x86_64 ${APP_NAME}-arm64 dist/
+                    ls -la dist/
+                '''
+                archiveArtifacts artifacts: 'dist/*', fingerprint: true
+            }
+        }
+    }
+}

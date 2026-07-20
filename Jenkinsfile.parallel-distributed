@@ -1,0 +1,54 @@
+// This is the pipeline I used to actually prove to myself the load was
+// being distributed rather than serialized on one agent. It fires off a
+// handful of independent chunks (imagine these were real test suites split
+// by folder) across every non-Pi node at once and times the whole thing, so
+// you can compare it against forcing everything onto a single node.
+//
+// To compare: hardcode `agent { label 'linux' }` on every branch and re-run
+// - the wall-clock difference makes the point better than any explanation
+// does.
+
+pipeline {
+    agent none
+
+    stages {
+        stage('Distributed test run') {
+            parallel {
+                stage('unit-tests-part-1') {
+                    agent { label 'linux' }
+                    steps {
+                        echo "Running on ${env.NODE_NAME}"
+                        sh 'sleep 20; echo "unit-tests-part-1 done"'
+                    }
+                }
+                stage('unit-tests-part-2') {
+                    agent { label 'linux && docker' }
+                    steps {
+                        echo "Running on ${env.NODE_NAME}"
+                        sh 'sleep 20; echo "unit-tests-part-2 done"'
+                    }
+                }
+                stage('integration-tests') {
+                    agent { label 'linux && docker' }
+                    steps {
+                        echo "Running on ${env.NODE_NAME}"
+                        sh 'sleep 25; echo "integration-tests done"'
+                    }
+                }
+                stage('windows-smoke-test') {
+                    agent { label 'windows' }
+                    steps {
+                        echo "Running on ${env.NODE_NAME}"
+                        bat 'timeout /t 15 & echo windows-smoke-test done'
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Total wall-clock time is in the build's own duration stat - compare it against a single-node run to see the point of distributing this."
+        }
+    }
+}

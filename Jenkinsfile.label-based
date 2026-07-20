@@ -1,0 +1,59 @@
+// Simple sanity-check pipeline for confirming label-based routing actually
+// works. Run this first after wiring up a new node - if the "Show me who I
+// landed on" step prints the wrong hostname, your label is wrong before you
+// go debug anything more complicated.
+//
+// I built this specifically because the first time I set up agent-pi-arm, I
+// left `agent any` in a test pipeline and it never actually landed there -
+// see the "Node showed connected but jobs never scheduled to it" entry in
+// docs/troubleshooting.md.
+
+pipeline {
+    agent none
+
+    stages {
+        stage('Linux general') {
+            agent { label 'linux' }
+            steps {
+                sh '''
+                    echo "Running on: $(hostname)"
+                    echo "Kernel: $(uname -a)"
+                    echo "Executor: ${EXECUTOR_NUMBER}"
+                '''
+            }
+        }
+
+        stage('Linux + Docker') {
+            agent { label 'linux && docker' }
+            steps {
+                sh '''
+                    echo "Running on: $(hostname)"
+                    docker --version
+                '''
+            }
+        }
+
+        stage('ARM') {
+            agent { label 'arm' }
+            steps {
+                sh '''
+                    echo "Running on: $(hostname)"
+                    uname -m
+                '''
+            }
+        }
+
+        stage('Windows') {
+            agent { label 'windows' }
+            steps {
+                bat 'echo Running on %COMPUTERNAME%'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'All four nodes touched - if you see hostnames for all of them above, labels are wired correctly.'
+        }
+    }
+}

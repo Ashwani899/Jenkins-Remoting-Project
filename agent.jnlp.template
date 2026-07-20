@@ -1,0 +1,26 @@
+<!--
+  Reference only - modern Jenkins agents are usually started with the
+  `java -jar agent.jar -url ... -secret ... -name ...` CLI form shown in
+  docs/setup-agent-jnlp.md, not this old-style .jnlp descriptor. Keeping this
+  here because it's a useful reference for what's actually being negotiated
+  under the hood (protocol, args) if you ever need to debug at that level.
+-->
+<jnlp spec="1.0+">
+  <information>
+    <title>Jenkins Agent</title>
+    <vendor>Jenkins project</vendor>
+  </information>
+  <security>
+    <all-permissions/>
+  </security>
+  <resources>
+    <j2se version="17+"/>
+    <jar href="agent.jar" main="true"/>
+  </resources>
+  <application-desc main-class="hudson.remoting.jnlp.Main">
+    <argument>{SECRET}</argument>
+    <argument>{AGENT_NAME}</argument>
+    <argument>-url</argument>
+    <argument>{CONTROLLER_URL}</argument>
+  </application-desc>
+</jnlp>

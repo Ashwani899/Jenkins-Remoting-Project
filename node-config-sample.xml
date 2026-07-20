@@ -1,0 +1,29 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!--
+  This is the actual $JENKINS_HOME/nodes/agent-linux-01/config.xml that got
+  generated after setting agent-linux-01 up through the UI, sanitized (no
+  real credential IDs beyond the placeholder name I gave the credential).
+  Kept here as a reference for what the SSH-launched node config looks like
+  once it's saved, in case you want to hand-edit or template one.
+-->
+<slave>
+  <name>agent-linux-01</name>
+  <description>Ubuntu 22.04 VM, general-purpose Linux builds</description>
+  <remoteFS>/home/jenkins/agent</remoteFS>
+  <numExecutors>2</numExecutors>
+  <mode>NORMAL</mode>
+  <retentionStrategy class="hudson.slaves.RetentionStrategy$Always"/>
+  <launcher class="hudson.plugins.sshslaves.SSHLauncher" plugin="ssh-slaves">
+    <host>192.168.1.51</host>
+    <port>22</port>
+    <credentialsId>jenkins-agent-key</credentialsId>
+    <launchTimeoutSeconds>60</launchTimeoutSeconds>
+    <maxNumRetries>3</maxNumRetries>
+    <retryWaitTime>15</retryWaitTime>
+    <sshHostKeyVerificationStrategy class="hudson.plugins.sshslaves.verifiers.ManuallyTrustedKeyVerificationStrategy">
+      <requireInitialManualTrust>false</requireInitialManualTrust>
+    </sshHostKeyVerificationStrategy>
+  </launcher>
+  <label>linux</label>
+  <nodeProperties/>
+</slave>
