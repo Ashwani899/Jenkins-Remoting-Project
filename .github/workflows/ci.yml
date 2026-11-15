@@ -20,7 +20,7 @@ jobs:
       - name: Check Linux bootstrap token protections
         run: |
           grep -F 'EnvironmentFile=$ENV_FILE' install-agent-ubuntu.sh
-          grep -F ' -secret \\${AGENT_SECRET} ' install-agent-ubuntu.sh
+          grep -F ' -secret \${AGENT_SECRET} ' install-agent-ubuntu.sh
           grep -F 'sudo chmod 0600 "$ENV_FILE"' install-agent-ubuntu.sh
       - name: Verify referenced setup documents exist
         run: |
