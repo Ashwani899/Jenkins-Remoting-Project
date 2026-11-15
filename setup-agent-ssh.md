@@ -4,7 +4,7 @@ Applies to `agent-linux-01` and `agent-linux-02` in this lab. Both are Ubuntu 22
 
 ## 1. Create a dedicated user
 
-Don't launch agents as `root` and don't reuse a personal account. I created a locked-down `jenkins` user with `scripts/create-agent-user.sh`:
+Don't launch agents as `root` and don't reuse a personal account. I created a locked-down `jenkins` user with `create-agent-user.sh`:
 
 ```bash
 sudo useradd -m -s /bin/bash jenkins
@@ -31,7 +31,7 @@ On the agent, as the `jenkins` user:
 ```bash
 mkdir -p /home/jenkins/.ssh
 chmod 700 /home/jenkins/.ssh
-# paste the PUBLIC half of the key generated in scripts/generate-ssh-keys.sh
+# paste the PUBLIC half of the key generated in generate-ssh-keys.sh
 echo "ssh-ed25519 AAAA... jenkins-agent-key" >> /home/jenkins/.ssh/authorized_keys
 chmod 600 /home/jenkins/.ssh/authorized_keys
 ```
