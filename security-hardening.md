@@ -18,7 +18,7 @@ Covered in `setup-agent-ssh.md` already, but worth repeating here: every agent i
 
 ### 3. Separate SSH key per purpose
 
-The key used for controller → `agent-linux-01`/`02` SSH launch (`jenkins-agent-key`, from `scripts/generate-ssh-keys.sh`) is dedicated to this and isn't reused anywhere else — not my personal key, not shared with any other automation. If it leaks, the blast radius is "someone can SSH in as an unprivileged build user on two lab VMs," not "someone has my actual SSH identity."
+The key used for controller → `agent-linux-01`/`02` SSH launch (`jenkins-agent-key`, from `generate-ssh-keys.sh`) is dedicated to this and isn't reused anywhere else — not my personal key, not shared with any other automation. If it leaks, the blast radius is "someone can SSH in as an unprivileged build user on two lab VMs," not "someone has my actual SSH identity."
 
 ### 4. Fixed, firewalled inbound port
 
@@ -43,5 +43,14 @@ I did not disable TLS/host key checking anywhere to "make it easier to connect" 
 ## Things I'd still want before calling this production-ready
 
 - Rotating the SSH agent key periodically (currently static)
-- Moving from a Script-Console-based node registration option (`scripts/register-node-cli.groovy`) to JCasC so node definitions are versioned, not click-ops
+- Moving from a Script-Console-based node registration option (`register-node-cli.groovy`) to JCasC so node definitions are versioned, not click-ops
 - Secrets management via something like Vault instead of Jenkins' built-in credential store, for anything beyond a home lab
+
+
+## 9. Inbound agent token handling and transport
+
+The Linux bootstrap writes the inbound agent token to a root-owned environment file with mode 0600 and references that file from the systemd unit. This avoids placing the token directly in a world-readable unit file. The Java agent CLI still receives the token through its -secret process argument, so a sufficiently privileged local user (or a user able to inspect that process) may still see it. Restrict local access to the agent host and keep the token scoped to that node.
+
+The Windows bootstrap also passes the token to the Java process as a command-line argument. Run it only on a trusted host and avoid shared shell history or logs.
+
+Use HTTPS with certificate validation for inbound connections. The Linux and Windows bootstrap scripts now refuse HTTP by default; an explicit opt-in remains only for isolated, trusted lab networks. HTTP exposes the agent token to network observers and must not be used on public, shared, or untrusted networks.
