@@ -54,6 +54,12 @@ if ! id "$AGENT_USER" >/dev/null 2>&1; then
   exit 2
 fi
 
+if [[ "$AGENT_USER" == "root" ]]; then
+  echo "Refusing to run the Jenkins agent as root. Set AGENT_USER to an unprivileged account." >&2
+  exit 2
+fi
+AGENT_GROUP="$(id -gn "$AGENT_USER")"
+
 AGENT_HOME="$(getent passwd "$AGENT_USER" | cut -d: -f6)"
 if [[ -z "$AGENT_HOME" ]]; then
   echo "Could not determine the home directory for '$AGENT_USER'." >&2
@@ -74,7 +80,7 @@ if (( ${#PACKAGES[@]} > 0 )); then
 fi
 
 echo "Preparing the agent work directory..."
-sudo install -d -o "$AGENT_USER" -g "$AGENT_USER" -m 0750 "$WORK_DIR"
+sudo install -d -o "$AGENT_USER" -g "$AGENT_GROUP" -m 0750 "$WORK_DIR"
 
 echo "Downloading agent.jar from the configured controller..."
 sudo -u "$AGENT_USER" curl -fsSL "${CURL_PROTOCOL_ARGS[@]}" \
