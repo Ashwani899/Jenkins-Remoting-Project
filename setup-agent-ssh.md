@@ -24,7 +24,11 @@ java -version
 
 Mismatch note: I initially had Java 11 on `agent-linux-02` while the controller was on 17. It connected but threw intermittent `UnsupportedClassVersionError` on some pipeline steps that used newer plugin code. Not immediately obvious what was wrong — worth checking `java -version` on both ends first if something's flaky.
 
-## 3. Authorize the controller's key
+## 3. Generate and register the controller key
+
+Run `./generate-ssh-keys.sh` on the controller. It prompts for a passphrase; use a strong passphrase where your lab workflow allows it. When creating the Jenkins **SSH Username with private key** credential, enter the same value in the credential's **Passphrase** field. If you intentionally leave the passphrase blank, treat the private key as unencrypted and keep its filesystem permissions and Jenkins credential scope tightly restricted. The public half belongs in the agent user's `authorized_keys`; never copy the private half to the agent.
+
+## 4. Authorize the controller's key
 
 On the agent, as the `jenkins` user:
 
