@@ -1,55 +1,76 @@
 # Setting up a JNLP (inbound) agent
 
-Applies to `agent-pi-arm` (Raspberry Pi 4, Raspberry Pi OS 64-bit) and `agent-win-01` (an old Windows 10 laptop). Both sit somewhere the controller can't initiate a connection to — the Pi is on a VLAN with client isolation, the laptop is just on wifi with a DHCP lease that changes.
+Applies to an ARM worker and a Windows worker that initiate the connection to the Jenkins controller. Adapt node names, paths, and labels to the machines available in your lab.
 
-## Why inbound instead of SSH here
+## Use HTTPS by default
 
-The agent reaches out to the controller instead of the other way round, so none of that matters — as long as the agent can hit `192.168.1.50:8080` (or `:50000` if you're not using WebSocket), it'll connect.
-
-## 1. Raspberry Pi (ARM64)
-
-Java first:
+Set the controller URL to its HTTPS reverse-proxy endpoint with a certificate trusted by the agent host:
 
 ```bash
-sudo apt update
-sudo apt install -y openjdk-17-jre-headless
+export CONTROLLER_URL="https://jenkins.example.internal"
 ```
 
-Create the working dir and pull the agent jar (grab this from the node's own page on the controller — `agent-pi-arm` in this repo's lab — it's always version-matched to your controller, don't cache an old copy):
+Download the agent JAR from the controller's node page or its HTTPS JNLP endpoint. Do not disable TLS certificate validation to make a connection work.
+
+## 1. Linux / Raspberry Pi OS (ARM64)
+
+Install Java 17:
 
 ```bash
-mkdir -p ~/jenkins-agent && cd ~/jenkins-agent
-curl -O http://192.168.1.50:8080/jnlpJars/agent.jar
+sudo apt-get update
+sudo apt-get install -y openjdk-17-jre-headless curl
 ```
 
-Run it (secret comes from the node's config page, `-webSocket` because I routed this over HTTP instead of opening 50000 on that VLAN):
+For a one-off connection, download the agent JAR and run it with the secret from that node's configuration page:
 
 ```bash
-java -jar agent.jar -url http://192.168.1.50:8080/ \
+mkdir -p ~/jenkins-agent
+cd ~/jenkins-agent
+curl -fsSLo agent.jar "$CONTROLLER_URL/jnlpJars/agent.jar"
+java -jar agent.jar -url "$CONTROLLER_URL/" \
   -secret <secret-from-node-page> \
   -name agent-pi-arm \
   -webSocket \
-  -workDir "/home/pi/jenkins-agent"
+  -workDir "$HOME/jenkins-agent"
 ```
 
-I turned this into a systemd service (`scripts/install-agent-ubuntu.sh` has the equivalent for Debian-based systems, same idea applies to Raspberry Pi OS) so it survives reboots — the Pi lives on a shelf and I am not walking over to SSH into it every time it restarts.
+The `-secret` value is passed to the Java process as an argument. Run this only on a trusted host and avoid putting the token in shell history or shared logs.
 
-Executor count: set to **1**. I tried 2 first and two concurrent `docker build`-style steps basically froze it — 4GB of RAM and an SD card are not enough for parallel builds, learned that the hard way.
+For a systemd service, use the checked-in [install-agent-ubuntu.sh](install-agent-ubuntu.sh). It requires `CONTROLLER_URL` and `AGENT_SECRET` in the environment, validates the controller scheme, stores the secret in a root-only environment file, and installs the service for the selected local agent user. It does not create that user; create it first if needed.
 
-## 2. Windows laptop
+Example with a prompt that avoids placing the token in the command text:
 
-Downloaded `agent.jar` from the same node page via browser instead of curl (no curl on this box by default). Ran it from PowerShell:
+```bash
+read -rsp "Jenkins agent secret: " AGENT_SECRET
+echo
+export AGENT_SECRET
+export CONTROLLER_URL="https://jenkins.example.internal"
+export AGENT_NAME="agent-pi-arm"
+./install-agent-ubuntu.sh
+unset AGENT_SECRET
+```
+
+The agent secret is still supplied to the Java process as a command-line argument when systemd starts it. Restrict local access to the agent host.
+
+If a lab controller is available only over HTTP, the Linux installer refuses it by default. Set `ALLOW_INSECURE_HTTP=true` only on an isolated, trusted network; never use this exception on a shared or public network.
+
+Set the ARM agent executor count conservatively. Small boards can become unresponsive when multiple memory-intensive builds run at once.
+
+## 2. Windows
+
+Install Java 17 and download the agent JAR from the controller over HTTPS. Start the script from a trusted PowerShell session:
 
 ```powershell
-java -jar agent.jar -url http://192.168.1.50:8080/ `
-  -secret <secret-from-node-page> `
-  -name agent-win-01 `
-  -webSocket `
-  -workDir "C:\jenkins-agent"
+.\\install-agent-windows.ps1 `
+  -ControllerUrl "https://jenkins.example.internal" `
+  -AgentName "agent-win-01" `
+  -AgentSecret "<secret-from-node-page>"
 ```
 
-For it to actually survive a reboot / not require someone logged in, I installed it as a Windows service using the **Agent as a Windows service** option that shows up when you visit the node's page directly from a browser *on that machine* (`http://192.168.1.50:8080/computer/agent-win-01/`) — it offers a native `.msi`-style installer at that point rather than the raw jar. Much less fiddly than trying to wrap it in NSSM myself.
+The script requires HTTPS unless `-AllowInsecureHttp` is explicitly supplied for an isolated, trusted lab network. The secret is passed to the Java process as a command-line argument; restrict local access and avoid storing the invocation in shared shell history.
 
-## Common gotcha across both
+For a persistent Windows service, use the supported agent service installer from the Jenkins node page and follow your controller's service-account policy.
 
-If the controller is behind a reverse proxy (mine is, nginx terminating TLS for `:8080`), make sure `X-Forwarded-*` headers and WebSocket upgrade headers are actually passed through, or the `-webSocket` connection will look like it hangs with no useful error. This one took me the longest to figure out — see `troubleshooting.md`.
+## Network and reverse-proxy checks
+
+If the controller is behind a reverse proxy, verify that TLS is terminated correctly and WebSocket upgrade headers are forwarded. Keep the controller URL, certificate hostname, and reverse-proxy configuration consistent. See [troubleshooting.md](troubleshooting.md) if a WebSocket connection appears to hang.
