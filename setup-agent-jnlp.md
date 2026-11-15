@@ -63,11 +63,10 @@ Install Java 17 and download the agent JAR from the controller over HTTPS. Start
 ```powershell
 .\\install-agent-windows.ps1 `
   -ControllerUrl "https://jenkins.example.internal" `
-  -AgentName "agent-win-01" `
-  -AgentSecret "<secret-from-node-page>"
+  -AgentName "agent-win-01"
 ```
 
-The script requires HTTPS unless `-AllowInsecureHttp` is explicitly supplied for an isolated, trusted lab network. The secret is passed to the Java process as a command-line argument; restrict local access and avoid storing the invocation in shared shell history.
+The script requires HTTPS unless `-AllowInsecureHttp` is explicitly supplied for an isolated, trusted lab network. The script prompts for the secret using a secure PowerShell input prompt, so it is not placed in the invocation history. The Java agent still receives the token as a process argument; restrict local access to the host.
 
 For a persistent Windows service, use the supported agent service installer from the Jenkins node page and follow your controller's service-account policy.
 
