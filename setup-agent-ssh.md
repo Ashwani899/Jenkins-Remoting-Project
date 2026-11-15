@@ -42,7 +42,7 @@ chmod 600 /home/jenkins/.ssh/authorized_keys
 
 `chmod` matters more than people expect — `sshd` will silently refuse to use `authorized_keys` if permissions are too open. Cost me twenty minutes the first time.
 
-## 4. Docker (agent-linux-02 only)
+## 5. Docker (agent-linux-02 only)
 
 ```bash
 curl -fsSL https://get.docker.com | sudo sh
@@ -51,7 +51,7 @@ sudo usermod -aG docker jenkins
 
 Log the `jenkins` user out/in (or reboot) for the group membership to take effect — `newgrp docker` works for a quick test but doesn't persist across the SSH sessions Jenkins opens.
 
-## 5. Firewall
+## 6. Firewall
 
 Only port 22 needs to be open from the controller's IP:
 
@@ -61,6 +61,6 @@ sudo ufw allow from 192.168.1.50 to any port 22 proto tcp
 
 Nothing else. This is the whole point of SSH-launched agents — no inbound Jenkins-specific ports on the agent at all.
 
-## 6. Register the node
+## 7. Register the node
 
 Back on the controller, follow `setup-master.md` section 2. Once saved, Jenkins should SSH in, drop `remoting.jar` into `/home/jenkins/agent/remoting/`, and bring the node online. Watch the node's log page during first connect — it tells you exactly what command it ran.
