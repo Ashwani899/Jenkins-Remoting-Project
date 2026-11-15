@@ -19,16 +19,6 @@ param(
     [switch]$AllowInsecureHttp
 )
 
-if ([string]::IsNullOrWhiteSpace($AgentSecret)) {
-    $secureSecret = Read-Host "Jenkins agent secret" -AsSecureString
-    $secretPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureSecret)
-    try {
-        $AgentSecret = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($secretPointer)
-    } finally {
-        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($secretPointer)
-    }
-}
-
 if (-not (Get-Command java -ErrorAction SilentlyContinue)) {
     throw "Java not found on PATH. Install Temurin 17 first: https://adoptium.net/"
 }
@@ -57,6 +47,16 @@ if ($controllerUri.Scheme -eq "http") {
     Write-Warning "HTTP exposes the agent secret to network observers. Continue only on an isolated, trusted lab network."
 }
 
+if ([string]::IsNullOrWhiteSpace($AgentSecret)) {
+    $secureSecret = Read-Host "Jenkins agent secret" -AsSecureString
+    $secretPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureSecret)
+    try {
+        $AgentSecret = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($secretPointer)
+    } finally {
+        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($secretPointer)
+    }
+}
+
 New-Item -ItemType Directory -Force -Path $WorkDir | Out-Null
 Set-Location $WorkDir
 
@@ -66,7 +66,7 @@ Invoke-WebRequest -Uri "$ControllerUrl/jnlpJars/agent.jar" -OutFile "$WorkDir\ag
 Write-Warning "The agent secret is passed to the Java process as a command-line argument. Restrict local access to this host."
 
 Write-Host "Connecting as $AgentName ..."
-& java -jar "$WorkDir\\agent.jar" `
+& java -jar "$WorkDir\agent.jar" `
     -url "$ControllerUrl/" `
     -secret $AgentSecret `
     -name $AgentName `
