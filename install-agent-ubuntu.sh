@@ -10,7 +10,7 @@
 #   AGENT_USER=jenkins
 #   ALLOW_INSECURE_HTTP=true  # isolated, trusted lab networks only
 #
-# Do not put AGENT_SECRET directly in shell history or a command-line argument.
+# Do not put AGENT_SECRET in shell history or the installer command line.
 # The Java agent CLI still receives the secret as a process argument; restrict
 # local access to the agent host and use HTTPS for the controller connection.
 
@@ -98,7 +98,7 @@ Wants=network-online.target
 User=$AGENT_USER
 WorkingDirectory=$WORK_DIR
 EnvironmentFile=$ENV_FILE
-ExecStart=/usr/bin/java -jar $WORK_DIR/agent.jar -url $CONTROLLER_URL/ -secret ${AGENT_SECRET} -name $AGENT_NAME -webSocket -workDir $WORK_DIR
+ExecStart=/usr/bin/java -jar $WORK_DIR/agent.jar -url $CONTROLLER_URL/ -secret \${AGENT_SECRET} -name $AGENT_NAME -webSocket -workDir $WORK_DIR
 Restart=on-failure
 RestartSec=10
 UMask=0077
