@@ -61,7 +61,7 @@ New-Item -ItemType Directory -Force -Path $WorkDir | Out-Null
 Set-Location $WorkDir
 
 Write-Host "Downloading agent.jar from the configured controller..."
-Invoke-WebRequest -Uri "$ControllerUrl/jnlpJars/agent.jar" -OutFile "$WorkDir\agent.jar"
+Invoke-WebRequest -Uri "$ControllerUrl/jnlpJars/agent.jar" -OutFile "$WorkDir\agent.jar" -MaximumRedirection 0 -ErrorAction Stop
 
 Write-Warning "The agent secret is passed to the Java process as a command-line argument. Restrict local access to this host."
 
