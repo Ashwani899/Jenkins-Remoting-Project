@@ -18,7 +18,7 @@ Covered in `setup-agent-ssh.md` already, but worth repeating here: every agent i
 
 ### 3. Separate SSH key per purpose
 
-The key used for controller → `agent-linux-01`/`02` SSH launch (`jenkins-agent-key`, from `generate-ssh-keys.sh`) is dedicated to this and isn't reused anywhere else — not my personal key, not shared with any other automation. If it leaks, the blast radius is "someone can SSH in as an unprivileged build user on two lab VMs," not "someone has my actual SSH identity."
+The key used for controller → `agent-linux-01`/`02` SSH launch (`jenkins-agent-key`, from `generate-ssh-keys.sh`) is dedicated to this and isn't reused anywhere else — not my personal key, not shared with any other automation. The helper prompts for a passphrase, which should also be stored in the Jenkins SSH credential. If a blank passphrase is deliberately chosen for unattended lab use, treat the private key as unencrypted and protect its file permissions and credential scope accordingly. If it leaks, the blast radius should be limited to SSH access as an unprivileged build user on the lab agents.
 
 ### 4. Fixed, firewalled inbound port
 
