@@ -61,7 +61,7 @@ Set the ARM agent executor count conservatively. Small boards can become unrespo
 Install Java 17 and download the agent JAR from the controller over HTTPS. Start the script from a trusted PowerShell session:
 
 ```powershell
-.\\install-agent-windows.ps1 `
+.\install-agent-windows.ps1 `
   -ControllerUrl "https://jenkins.example.internal" `
   -AgentName "agent-win-01"
 ```
