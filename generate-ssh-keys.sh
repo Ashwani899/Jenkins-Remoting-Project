@@ -24,9 +24,13 @@ if [[ -f "${KEY_PATH}" ]]; then
   exit 1
 fi
 
-# No passphrase on purpose - Jenkins' SSH launcher can't prompt for one.
-# Learned this the hard way, see troubleshooting.md.
-ssh-keygen -t ed25519 -f "${KEY_PATH}" -N "" -C "${KEY_NAME}"
+# The helper prompts for a passphrase. Store the same passphrase in the
+# Jenkins SSH private-key credential. Leave it blank only when your isolated
+# lab requires an unencrypted key; protect that private key file carefully.
+read -rsp "SSH key passphrase (recommended; Enter for no passphrase): " KEY_PASSPHRASE
+echo
+ssh-keygen -t ed25519 -f "${KEY_PATH}" -N "${KEY_PASSPHRASE}" -C "${KEY_NAME}"
+unset KEY_PASSPHRASE
 
 echo ""
 echo "Private key: ${KEY_PATH}"
