@@ -12,13 +12,22 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$AgentName,
 
-    [Parameter(Mandatory = $true)]
-    [string]$AgentSecret,
+    [string]$AgentSecret = $env:JENKINS_AGENT_SECRET,
 
-    [string]$WorkDir = "C:\\jenkins-agent",
+    [string]$WorkDir = "C:\jenkins-agent",
 
     [switch]$AllowInsecureHttp
 )
+
+if ([string]::IsNullOrWhiteSpace($AgentSecret)) {
+    $secureSecret = Read-Host "Jenkins agent secret" -AsSecureString
+    $secretPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureSecret)
+    try {
+        $AgentSecret = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($secretPointer)
+    } finally {
+        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($secretPointer)
+    }
+}
 
 if (-not (Get-Command java -ErrorAction SilentlyContinue)) {
     throw "Java not found on PATH. Install Temurin 17 first: https://adoptium.net/"
@@ -52,7 +61,7 @@ New-Item -ItemType Directory -Force -Path $WorkDir | Out-Null
 Set-Location $WorkDir
 
 Write-Host "Downloading agent.jar from the configured controller..."
-Invoke-WebRequest -Uri "$ControllerUrl/jnlpJars/agent.jar" -OutFile "$WorkDir\\agent.jar"
+Invoke-WebRequest -Uri "$ControllerUrl/jnlpJars/agent.jar" -OutFile "$WorkDir\agent.jar"
 
 Write-Warning "The agent secret is passed to the Java process as a command-line argument. Restrict local access to this host."
 
@@ -67,3 +76,4 @@ Write-Host "Connecting as $AgentName ..."
 if ($LASTEXITCODE -ne 0) {
     throw "Jenkins agent exited with code $LASTEXITCODE."
 }
+$AgentSecret = $null
