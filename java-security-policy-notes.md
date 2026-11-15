@@ -1,6 +1,6 @@
 # Notes on the agent-to-controller security subsystem
 
-Kept separate from `docs/security-hardening.md` because this got long enough
+Kept separate from `security-hardening.md` because this got long enough
 to deserve its own scratch notes - this is the more "reference" version,
 the other doc is the narrative version of what I actually did.
 

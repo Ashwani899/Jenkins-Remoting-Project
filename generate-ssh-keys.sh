@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Generates a dedicated ed25519 keypair to be used ONLY for controller -> agent
 # SSH-launch connections. Do not reuse this key for anything else - see the
-# note in docs/security-hardening.md about key scoping.
+# note in security-hardening.md about key scoping.
 #
 # Run this ON THE CONTROLLER, then:
 #   - upload the PRIVATE key as an "SSH Username with private key" credential
@@ -24,9 +24,10 @@ if [[ -f "${KEY_PATH}" ]]; then
   exit 1
 fi
 
-# No passphrase on purpose - Jenkins' SSH launcher can't prompt for one.
-# Learned this the hard way, see docs/troubleshooting.md.
-ssh-keygen -t ed25519 -f "${KEY_PATH}" -N "" -C "${KEY_NAME}"
+# The helper prompts for a passphrase. Store the same passphrase in the
+# Jenkins SSH private-key credential. Leave it blank only when your isolated
+# lab requires an unencrypted key; protect that private key file carefully.
+ssh-keygen -t ed25519 -f "${KEY_PATH}" -C "${KEY_NAME}"
 
 echo ""
 echo "Private key: ${KEY_PATH}"

@@ -15,11 +15,11 @@ Assuming Jenkins is already installed and reachable at `http://192.168.1.50:8080
 
 - Name: `agent-linux-01`
 - Type: Permanent Agent
-- Remote root directory: `/home/jenkins/agent` (matches the user created in `scripts/create-agent-user.sh`)
+- Remote root directory: `/home/jenkins/agent` (matches the user created in `create-agent-user.sh`)
 - Labels: `linux`
 - Launch method: **Launch agents via SSH**
   - Host: `192.168.1.51`
-  - Credentials: added an SSH username/private key credential (`jenkins-agent-key`), generated with `scripts/generate-ssh-keys.sh` — do NOT reuse your personal SSH key here, I made that mistake on the first pass and had to regenerate everything
+  - Credentials: added an SSH username/private key credential (`jenkins-agent-key`), generated with `generate-ssh-keys.sh` — do NOT reuse your personal SSH key here, I made that mistake on the first pass and had to regenerate everything
   - Host Key Verification Strategy: **Manually trusted key verification** — I actually SSH'd in once from the controller's shell first to accept the host key, then set this to "known hosts file" so it stays pinned. "Non verifying" is the lazy option and it's how you get MITM'd on a network you don't fully trust.
 
 Repeat for `agent-linux-02`, labels `linux,docker` (this one has Docker installed for containerized build steps).

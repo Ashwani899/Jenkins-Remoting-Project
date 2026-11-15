@@ -1,0 +1,50 @@
+name: Jenkins remoting lab checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shell-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Bash helper syntax
+        run: bash -n create-agent-user.sh generate-ssh-keys.sh install-agent-ubuntu.sh
+      - name: Check Linux bootstrap token protections
+        run: |
+          grep -F 'EnvironmentFile=$ENV_FILE' install-agent-ubuntu.sh
+          grep -F ' -secret \${AGENT_SECRET} ' install-agent-ubuntu.sh
+          grep -F 'sudo chmod 0600 "$ENV_FILE"' install-agent-ubuntu.sh
+      - name: Verify referenced setup documents exist
+        run: |
+          test -f setup-master.md
+          test -f setup-agent-ssh.md
+          test -f setup-agent-jnlp.md
+          test -f security-hardening.md
+          test -f troubleshooting.md
+
+  powershell-syntax:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse Windows agent bootstrap
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Join-Path $PWD.Path 'install-agent-windows.ps1'),
+            [ref]$tokens,
+            [ref]$parseErrors
+          ) | Out-Null
+          if ($parseErrors.Count -gt 0) {
+            $parseErrors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }

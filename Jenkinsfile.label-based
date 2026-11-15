@@ -6,7 +6,7 @@
 // I built this specifically because the first time I set up agent-pi-arm, I
 // left `agent any` in a test pipeline and it never actually landed there -
 // see the "Node showed connected but jobs never scheduled to it" entry in
-// docs/troubleshooting.md.
+// troubleshooting.md.
 
 pipeline {
     agent none
