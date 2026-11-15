@@ -54,7 +54,7 @@ See [architecture.md](architecture.md) for the detailed topology and assumptions
 ## Security notes
 
 - Run agents as unprivileged operating-system users.
-- Use a dedicated SSH key and retain host-key verification.
+- Use a dedicated SSH key and retain host-key verification. The key helper prompts for a passphrase; store the same passphrase in the Jenkins SSH credential. A blank passphrase is an explicit lab convenience, not the preferred default.
 - Keep agent-to-controller access control enabled.
 - Restrict inbound connectivity and scope Jenkins credentials to the jobs that need them.
 - Use HTTPS with a valid certificate for inbound agent connections.
